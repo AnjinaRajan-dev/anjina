@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="c4ede02c-921a-4acc-8036-621504aeeb09" basePath="/v1/history/monthly">
+		<http:request-connection protocol="HTTPS" host="api.meteostat.net" />
+	</http:request-config>
+	
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="13aa74ad-657e-43d0-a15c-8d3ebdd9fca3">
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="76a228e6-12fb-44ec-bcb9-72dcd1a5bb8e" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<http:listener-config name="HTTP_Listener_config2" doc:name="HTTP Listener config" doc:id="03a5c12b-ef21-4598-a572-041cc6c38f5e" >
+		<http:listener-connection host="0.0.0.0" port="8083" />
+	</http:listener-config>
+	<flow name="meteostatFlow" doc:id="3deaf690-8b2e-44e0-a948-1e329839707c" >
+		<http:listener doc:name="Listener" doc:id="f1c77bc1-eaf7-4a61-91ca-cd4483d22ff9" path="/precipitation" config-ref="HTTP_Listener_config"/>
+		<http:request method="GET" doc:name="Request" doc:id="7a93b787-3a5d-4112-9bde-7e0933363cca" path="/" config-ref="HTTP_Request_configuration">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"start" : "2009-01",
+	"key" : "uFwmrhOW",
+	"end" : "2009-12",
+	"station" : "71964"
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="ae3836c3-23bc-4286-85b5-299fbe220f43" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+items: payload.data map((item, index) -> {
+	month: item.month,
+	precipitation: item.precipitation
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="meteostatFlow1" doc:id="41cfc2f8-4d47-42c7-8e80-457cdefa1d32" >
+		<http:listener doc:name="Listener" doc:id="30c6fb18-cf3e-40a2-865f-5614c0e4afe0" path="/path2" config-ref="HTTP_Listener_config1"/>
+		<set-variable doc:name="Set Variable" doc:id="656c25f7-9fbf-44ee-8eb7-28c900ddeebf" variableName="months" value="#[attributes.queryParams.month]" />
+		<http:request method="GET" doc:name="Request" doc:id="358204bd-bfc1-46f8-b65d-c0317a40c40b" path="/" config-ref="HTTP_Request_configuration">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"start" : "2009-01",
+	"key" : "lR0cZrnk",
+	"end" : "2009-12",
+	"station" : "71964"
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Logger" doc:id="30ab7cd5-6eb0-428f-bf55-60e7e2d7e534" message="#[vars.months]" />
+		<ee:transform doc:name="Transform Message" doc:id="59bbb549-4075-48db-8168-8206370a5a45" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.data map((item, index) -> {
+	month: item.month,
+	maxtemp: item.temperature_max
+}filterObject item.month==vars.months)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="meteostatFlow2" doc:id="c487095f-fbc0-4a28-b838-c0ea347236f0" >
+		<http:listener doc:name="Listener" doc:id="f4c48289-f783-466c-803a-9b5042088e48" path="/path3" config-ref="HTTP_Listener_config2"/>
+		<http:request method="GET" doc:name="Request" doc:id="019f9b6c-50cf-4734-90c3-c312ae25f84d" path="/" config-ref="HTTP_Request_configuration">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"start" : "2009-01",
+	"key" : "uFwmrhOW",
+	"end" : "2009-12",
+	"station" : "71964"
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="426ef9c3-df58-44d1-b6a0-c8b1159d9c0d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
