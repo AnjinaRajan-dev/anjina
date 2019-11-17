@@ -15,7 +15,7 @@ http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/cu
 		</http:request-connection>
 	</http:request-config>
 	<s3:config name="Amazon_S3_Configuration" doc:name="Amazon S3 Configuration" doc:id="4a6cd7b4-bcf6-44fa-a49e-564bce624a01" >
-		<s3:basic-connection accessKey="AKIAJWKZDPLHRO4WPP7A" secretKey="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" region="AP_SOUTH_1"/>
+		<s3:basic-connection accessKey="" secretKey="" region="AP_SOUTH_1"/>
 	</s3:config>
 	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="8ab873c0-90f4-45a5-b24f-bce51548e94e" >
 		<http:listener-connection host="0.0.0.0" port="8082" />
