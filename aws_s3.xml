@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:s3="http://www.mulesoft.org/schema/mule/s3" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/s3 http://www.mulesoft.org/schema/mule/s3/current/mule-s3.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1512b8d2-5010-4900-8851-f30418b431c7" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="d5f35e70-5c85-429c-8bdf-1982234ec75b" >
+		<http:request-connection protocol="HTTPS" host="bucket-anjina.s3.ap-south-1.amazonaws.com">
+		</http:request-connection>
+	</http:request-config>
+	<s3:config name="Amazon_S3_Configuration" doc:name="Amazon S3 Configuration" doc:id="4a6cd7b4-bcf6-44fa-a49e-564bce624a01" >
+		<s3:basic-connection accessKey="AKIAJWKZDPLHRO4WPP7A" secretKey="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" region="AP_SOUTH_1"/>
+	</s3:config>
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="8ab873c0-90f4-45a5-b24f-bce51548e94e" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<flow name="aws_s3Flow" doc:id="493227a8-8769-42fe-9e0c-dcbaf3fadf43" >
+		<http:listener doc:name="Listener" doc:id="7f4f31ce-c999-40a9-b2de-dd39fe90e0d5" config-ref="HTTP_Listener_config" path="/s3"/>
+		<s3:get-object doc:name="Get object" doc:id="2a661482-edd3-4a8c-bb1f-52d4869d86cc" config-ref="Amazon_S3_Configuration" bucketName="bucket-anjina" key="meteostat.json"/>
+		<ee:transform doc:name="Transform Message" doc:id="bdb20170-f832-4a20-b8d4-476546bd044e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="aws_s3Flow1" doc:id="649f3a3c-4149-4a37-8dbb-114642452e1a" >
+		<http:listener doc:name="Listener" doc:id="f808f1d1-5151-4409-b112-0a1eec0dc8cd" config-ref="HTTP_Listener_config1" path="/path"/>
+		<http:request method="GET" doc:name="Request" doc:id="5f17acad-1152-486e-8096-32cbbc98ad9d" config-ref="HTTP_Request_configuration" path="#[attributes.queryParams.Name]">
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="c1a2e48e-cb0b-4182-9676-7d38127832a5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
